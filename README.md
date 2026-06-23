@@ -55,29 +55,42 @@ Inspirations principales :
 
 ---
 
-## Structure du projet (à venir)
+## Structure du projet
 
 ```
 spanish-app/
-├── app/              # Écrans (Expo Router)
-├── components/       # Composants réutilisables
-├── assets/           # Images, polices, sons
-├── lib/              # Logique SRS, utilitaires
-├── data/             # Decks de vocabulaire
-└── store/            # État global (Zustand)
+├── app/                  # Écrans (Expo Router)
+│   ├── _layout.tsx       # Layout racine + store de progression
+│   ├── index.tsx         # Accueil : liste des niveaux
+│   ├── level/[id].tsx    # Thèmes d'un niveau
+│   └── review/[deck].tsx # Session de révision (flashcards)
+├── components/           # Flashcard animée, boutons, barre de progression
+├── lib/                  # Thème, types, algorithme SRS (SM-2), stockage
+├── data/                 # Niveaux et decks de vocabulaire
+│   ├── levels.ts         # Index des niveaux A1→C2
+│   ├── a1.ts / a1b.ts    # Niveau A1 (~88 cartes)
+├── store/                # État global de progression (Context + AsyncStorage)
+└── __tests__/            # Tests unitaires (logique SRS)
 ```
+
+## État actuel
+
+- ✅ Application Expo (React Native + TypeScript, Expo Router)
+- ✅ Algorithme de répétition espacée SM-2 + progression persistée
+- ✅ UI chaleureuse « espagnole », flashcards animées (flip 3D)
+- ✅ **Niveau A1 complet** : ~88 cartes, 8 thèmes, chacune avec mot + traduction + phrase de contexte
+- ⏳ Niveaux A2 → C2 (à venir, objectif 500+ cartes)
 
 ---
 
 ## Démarrage rapide
 
-> La configuration initiale sera ajoutée au fur et à mesure du développement.
-
 ```bash
 git clone https://github.com/MS13-dev/Spanish-App.git
 cd Spanish-App
 npm install
-npx expo start
+npx expo start      # puis scanner le QR code avec l'app Expo Go
+npm test            # lancer les tests unitaires
 ```
 
 ---
