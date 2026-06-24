@@ -19,7 +19,14 @@ export default function Home() {
         paddingHorizontal: spacing.lg,
       }}
     >
-      <Text style={styles.kicker}>¡Hola! 🇪🇸</Text>
+      <View style={styles.topRow}>
+        <Text style={styles.kicker}>¡Hola! 🇪🇸</Text>
+        <Link href="/sauvegarde" asChild>
+          <Pressable style={styles.gear} hitSlop={12}>
+            <Text style={styles.gearIcon}>⚙️</Text>
+          </Pressable>
+        </Link>
+      </View>
       <Text style={styles.title}>Apprends l'espagnol</Text>
       <Text style={styles.subtitle}>
         Choisis un niveau et révise tes cartes chaque jour.
@@ -72,6 +79,17 @@ export default function Home() {
 }
 
 const styles = StyleSheet.create({
+  topRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  gear: {
+    width: 44,
+    height: 44,
+    borderRadius: radius.pill,
+    backgroundColor: colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...shadow.soft,
+  },
+  gearIcon: { fontSize: 20 },
   kicker: { ...typography.heading, color: colors.terracotta },
   title: { ...typography.display, color: colors.text, marginTop: spacing.xs },
   subtitle: { ...typography.body, color: colors.textSoft, marginTop: spacing.sm },

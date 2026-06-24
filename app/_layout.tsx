@@ -21,6 +21,7 @@ export default function RootLayout() {
           <Stack.Screen name="index" options={{ headerShown: false }} />
           <Stack.Screen name="level/[id]" options={{ title: '' }} />
           <Stack.Screen name="review/[deck]" options={{ title: 'Révision', presentation: 'modal' }} />
+          <Stack.Screen name="sauvegarde" options={{ title: 'Sauvegarde' }} />
         </Stack>
       </ProgressProvider>
     </SafeAreaProvider>
