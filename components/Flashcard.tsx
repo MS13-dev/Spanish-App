@@ -6,24 +6,29 @@ import Animated, {
   withTiming,
   interpolate,
 } from 'react-native-reanimated';
-import { Card } from '@/lib/types';
+import { Card, Direction } from '@/lib/types';
 import { colors, radius, typography, shadow, spacing } from '@/lib/theme';
 
 interface Props {
   card: Card;
+  /** Sens : recognition = espagnol au recto ; production = français au recto. */
+  direction: Direction;
   /** Réinitialise la face visible quand la carte change. */
   resetKey: string | number;
   onFlip?: (flipped: boolean) => void;
+  /** Facteur de taille du texte (accessibilité). */
+  textScale?: number;
 }
 
 /**
- * Carte qui se retourne au toucher (recto espagnol → verso français + contexte).
- * Animation de flip 3D fluide via Reanimated.
+ * Carte qui se retourne au toucher.
+ * - recognition : recto = mot espagnol, verso = traduction française
+ * - production  : recto = mot français, verso = mot espagnol (à produire)
+ * La phrase de contexte (ES + FR) s'affiche toujours au verso.
  */
-export function Flashcard({ card, resetKey, onFlip }: Props) {
-  const progress = useSharedValue(0); // 0 = recto, 1 = verso
+export function Flashcard({ card, direction, resetKey, onFlip, textScale = 1 }: Props) {
+  const progress = useSharedValue(0);
 
-  // Remet la carte sur le recto quand on passe à une nouvelle carte.
   React.useEffect(() => {
     progress.value = 0;
   }, [resetKey, progress]);
@@ -38,37 +43,37 @@ export function Flashcard({ card, resetKey, onFlip }: Props) {
     transform: [{ perspective: 1000 }, { rotateY: `${interpolate(progress.value, [0, 1], [0, 180])}deg` }],
     opacity: progress.value < 0.5 ? 1 : 0,
   }));
-
   const backStyle = useAnimatedStyle(() => ({
     transform: [{ perspective: 1000 }, { rotateY: `${interpolate(progress.value, [0, 1], [180, 360])}deg` }],
     opacity: progress.value < 0.5 ? 0 : 1,
   }));
 
+  const frontWord = direction === 'recognition' ? card.es : card.fr;
+  const backWord = direction === 'recognition' ? card.fr : card.es;
+  const s = textScale;
+
   return (
     <Pressable onPress={flip} style={styles.wrapper}>
-      {/* Recto : mot espagnol */}
       <Animated.View style={[styles.card, styles.front, frontStyle]}>
         {card.pos ? <Text style={styles.pos}>{card.pos}</Text> : null}
-        <Text style={styles.word}>{card.es}</Text>
-        <Text style={styles.hint}>Touchez pour voir la traduction</Text>
+        <Text style={[styles.word, { fontSize: 40 * s }]}>{frontWord}</Text>
+        <Text style={[styles.hint, { fontSize: 13 * s }]}>
+          Touchez pour voir {direction === 'recognition' ? 'la traduction' : "le mot espagnol"}
+        </Text>
       </Animated.View>
 
-      {/* Verso : traduction + phrase de contexte */}
       <Animated.View style={[styles.card, styles.back, backStyle]}>
-        <Text style={styles.translation}>{card.fr}</Text>
+        <Text style={[styles.translation, { fontSize: 32 * s }]}>{backWord}</Text>
         <View style={styles.divider} />
-        <Text style={styles.exampleEs}>« {card.exampleEs} »</Text>
-        <Text style={styles.exampleFr}>{card.exampleFr}</Text>
+        <Text style={[styles.exampleEs, { fontSize: 19 * s }]}>« {card.exampleEs} »</Text>
+        <Text style={[styles.exampleFr, { fontSize: 16 * s }]}>{card.exampleFr}</Text>
       </Animated.View>
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  wrapper: {
-    width: '100%',
-    height: 340,
-  },
+  wrapper: { width: '100%', height: 340 },
   card: {
     ...StyleSheet.absoluteFillObject,
     borderRadius: radius.xl,
@@ -78,14 +83,8 @@ const styles = StyleSheet.create({
     backfaceVisibility: 'hidden',
     ...shadow.card,
   },
-  front: {
-    backgroundColor: colors.surface,
-    borderWidth: 2,
-    borderColor: colors.border,
-  },
-  back: {
-    backgroundColor: colors.terracotta,
-  },
+  front: { backgroundColor: colors.surface, borderWidth: 2, borderColor: colors.border },
+  back: { backgroundColor: colors.terracotta },
   pos: {
     ...typography.caption,
     color: colors.textSoft,
@@ -93,24 +92,9 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 1,
   },
-  word: {
-    fontSize: 40,
-    fontWeight: '800',
-    color: colors.text,
-    textAlign: 'center',
-  },
-  hint: {
-    ...typography.caption,
-    color: colors.textSoft,
-    marginTop: spacing.lg,
-  },
-  translation: {
-    fontSize: 32,
-    fontWeight: '800',
-    color: colors.textOnColor,
-    textAlign: 'center',
-    marginBottom: spacing.md,
-  },
+  word: { fontWeight: '800', color: colors.text, textAlign: 'center' },
+  hint: { color: colors.textSoft, marginTop: spacing.lg, fontWeight: '600' },
+  translation: { fontWeight: '800', color: colors.textOnColor, textAlign: 'center', marginBottom: spacing.md },
   divider: {
     width: 60,
     height: 3,
@@ -118,16 +102,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.5)',
     marginVertical: spacing.md,
   },
-  exampleEs: {
-    ...typography.heading,
-    color: colors.textOnColor,
-    textAlign: 'center',
-    fontStyle: 'italic',
-    marginBottom: spacing.sm,
-  },
-  exampleFr: {
-    ...typography.body,
-    color: 'rgba(255,255,255,0.85)',
-    textAlign: 'center',
-  },
+  exampleEs: { color: colors.textOnColor, textAlign: 'center', fontStyle: 'italic', marginBottom: spacing.sm, fontWeight: '700' },
+  exampleFr: { color: 'rgba(255,255,255,0.85)', textAlign: 'center', fontWeight: '500' },
 });

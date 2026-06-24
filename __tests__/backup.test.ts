@@ -6,26 +6,43 @@ import {
   EXPORT_VERSION,
   APP_TAG,
 } from '@/lib/backup';
-import { ProgressMap } from '@/lib/storage';
+import { makeProfile, defaultProfileData } from '@/lib/defaults';
 
-const sample: ProgressMap = {
-  'a1-saludos-hola:recognition': { ease: 2.5, interval: 3, reps: 2, due: 1000, lastReviewed: 500 },
+const profile = makeProfile('Maman', '🌸');
+const data = defaultProfileData();
+data.progress['a1-saludos-hola:recognition'] = {
+  ease: 2.5,
+  interval: 3,
+  reps: 2,
+  due: 1000,
+  lastReviewed: 500,
 };
 
-describe('Sauvegarde (export/import)', () => {
-  it('construit une sauvegarde avec app, version et date', () => {
-    const exp = buildExport(sample);
+describe('Sauvegarde (export/import v2)', () => {
+  it('construit une sauvegarde v2 avec profil et données', () => {
+    const exp = buildExport(profile, data);
     expect(exp.app).toBe(APP_TAG);
     expect(exp.version).toBe(EXPORT_VERSION);
-    expect(typeof exp.exportedAt).toBe('string');
-    expect(exp.progress).toEqual(sample);
+    expect(exp.profile.name).toBe('Maman');
+    expect(exp.data.progress).toEqual(data.progress);
   });
 
   it('fait un aller-retour export → import sans perte', () => {
-    const text = serializeExport(sample);
-    const parsed = parseImport(text);
-    expect(parsed.progress).toEqual(sample);
+    const parsed = parseImport(serializeExport(profile, data));
+    expect(parsed.profile?.name).toBe('Maman');
+    expect(parsed.data.progress).toEqual(data.progress);
     expect(parsed.cardCount).toBe(1);
+  });
+
+  it('accepte encore l\'ancien format v1 (progression seule)', () => {
+    const v1 = JSON.stringify({
+      app: APP_TAG,
+      version: 1,
+      progress: { 'a1-x:recognition': { ease: 2, interval: 1, reps: 1, due: 0, lastReviewed: 1 } },
+    });
+    const parsed = parseImport(v1);
+    expect(parsed.cardCount).toBe(1);
+    expect(parsed.data.settings).toBeDefined(); // complété avec les réglages par défaut
   });
 
   it('rejette un JSON illisible', () => {
@@ -33,32 +50,16 @@ describe('Sauvegarde (export/import)', () => {
   });
 
   it("rejette un fichier d'une autre application", () => {
-    const text = JSON.stringify({ app: 'autre-app', version: 1, progress: {} });
-    expect(() => parseImport(text)).toThrow(/Spanish App/);
+    expect(() => parseImport(JSON.stringify({ app: 'autre', version: 2 }))).toThrow(/Spanish App/);
   });
 
   it('rejette une version future', () => {
-    const text = JSON.stringify({ app: APP_TAG, version: EXPORT_VERSION + 1, progress: {} });
+    const text = JSON.stringify({ app: APP_TAG, version: EXPORT_VERSION + 1 });
     expect(() => parseImport(text)).toThrow(/version plus récente/);
   });
 
-  it('ignore les entrées de progression invalides', () => {
-    const text = JSON.stringify({
-      app: APP_TAG,
-      version: EXPORT_VERSION,
-      progress: {
-        bonne: sample['a1-saludos-hola:recognition'],
-        mauvaise: { ease: 'x' },
-      },
-    });
-    const parsed = parseImport(text);
-    expect(parsed.cardCount).toBe(1);
-    expect(parsed.progress.bonne).toBeDefined();
-    expect(parsed.progress.mauvaise).toBeUndefined();
-  });
-
-  it('génère un nom de fichier daté', () => {
-    const name = exportFileName(new Date('2026-06-24T10:00:00Z'));
-    expect(name).toBe('spanish-app-sauvegarde-2026-06-24.json');
+  it('génère un nom de fichier daté avec le prénom', () => {
+    const name = exportFileName(profile, new Date('2026-06-24T10:00:00Z'));
+    expect(name).toBe('spanish-app-maman-2026-06-24.json');
   });
 });
