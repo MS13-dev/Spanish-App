@@ -1,4 +1,4 @@
-import { Level, Deck } from '@/lib/types';
+import { Level, Deck, Card } from '@/lib/types';
 import { a1Decks } from './a1';
 import { a1DecksPart2 } from './a1b';
 
@@ -27,6 +27,15 @@ export function getLevel(id: string): Level | undefined {
 
 export function getDeck(levelId: string, deckId: string): Deck | undefined {
   return getLevel(levelId)?.decks.find((d) => d.id === deckId);
+}
+
+/**
+ * Toutes les cartes d'un niveau, tous thèmes confondus.
+ * Les thèmes restent organisés dans les fichiers de données (pour faciliter
+ * l'enrichissement), mais l'app les présente comme un seul lot.
+ */
+export function getLevelCards(levelId: string): Card[] {
+  return getLevel(levelId)?.decks.flatMap((d) => d.cards) ?? [];
 }
 
 /** Tous les ids de cartes d'un niveau (pour compter dues/apprises). */
