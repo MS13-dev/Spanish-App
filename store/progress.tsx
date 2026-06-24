@@ -14,6 +14,8 @@ interface ProgressContextValue {
   dueCount: (cardIds: string[]) => number;
   /** Nombre de cartes déjà apprises (au moins une révision réussie). */
   learnedCount: (cardIds: string[]) => number;
+  /** Remplace toute la progression (utilisé par la restauration d'une sauvegarde). */
+  replaceProgress: (next: ProgressMap) => void;
   /** Réinitialise toute la progression (pour tests / réglages). */
   reset: () => void;
 }
@@ -63,11 +65,13 @@ export function ProgressProvider({ children }: { children: React.ReactNode }) {
     [map]
   );
 
+  const replaceProgress = useCallback((next: ProgressMap) => persist(next), [persist]);
+
   const reset = useCallback(() => persist({}), [persist]);
 
   return (
     <ProgressContext.Provider
-      value={{ ready, map, grade, get, dueCount, learnedCount, reset }}
+      value={{ ready, map, grade, get, dueCount, learnedCount, replaceProgress, reset }}
     >
       {children}
     </ProgressContext.Provider>
